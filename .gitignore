@@ -1,0 +1,7 @@
+# Real settings and secrets
+.env
+.env.*
+!.env.example
+
+# Server data: database files and backups (back this up, never commit it)
+Dockerdata/
