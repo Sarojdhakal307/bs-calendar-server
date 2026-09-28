@@ -5,3 +5,5 @@
 
 # Server data: database files and backups (back this up, never commit it)
 Dockerdata/
+
+nginx

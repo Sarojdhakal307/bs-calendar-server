@@ -1,5 +1,5 @@
 # BS/AD Calendar API on one server, using the published image ghcr.io/sarojdhakal307/calendar-api
-# built from the open-source bs-calendar repository. Setup: README.md in this repository.
+# built from https://github.com/Sarojdhakal307/bs-calendar. Setup: README.md in this repository.
 #
 #   cp .env.example .env   # fill in every CHANGE_ME
 #   docker compose up -d

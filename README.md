@@ -1,15 +1,16 @@
-# bs-server: production server for the BS/AD Calendar
+# bs-calendar-server: run the BS/AD Calendar on your own server
 
-This repository runs the published image **`ghcr.io/sarojdhakal307/calendar-api`** on one Linux server.
-nginx on the host serves **https://calendar.oneclickinfosys.com** and forwards to the containers.
+This repository runs the published image **`ghcr.io/sarojdhakal307/calendar-api`** on one Linux server with
+PostgreSQL, nginx, HTTPS and daily backups. It is the setup behind **https://calendar.oneclickinfosys.com**;
+clone it to host your own copy on your own domain.
 
 It holds only server configuration. The application itself (source code, API docs, releases) is the
-open-source **bs-calendar** repository: https://github.com/Sarojdhakal307/BS
+open-source **[bs-calendar](https://github.com/Sarojdhakal307/bs-calendar)** repository.
 
-| Repository | Visibility | Contains |
-|------------|------------|----------|
-| [bs-calendar](https://github.com/Sarojdhakal307/BS) | Public (open source) | Go service, website, dashboard, docs. Tagging `vX.Y.Z` builds and publishes the Docker image. |
-| bs-server (this one) | Private | How *our* server runs that image: compose file, nginx site, backup and database scripts, `.env.example`. |
+| Repository | Contains |
+|------------|----------|
+| [bs-calendar](https://github.com/Sarojdhakal307/bs-calendar) | Go service, website, dashboard, docs, web and Expo guides. Tagging `vX.Y.Z` builds and publishes the Docker image. |
+| [bs-calendar-server](https://github.com/Sarojdhakal307/bs-calendar-server) (this one) | How a server runs that image: compose file, nginx site, backup and database scripts, `.env.example`. |
 
 A release therefore goes: tag bs-calendar → image `ghcr.io/sarojdhakal307/calendar-api:vX.Y.Z` is built →
 set `VERSION=vX.Y.Z` in this server's `.env` → `docker compose pull && docker compose up -d` (section 6).
@@ -19,7 +20,7 @@ set `VERSION=vX.Y.Z` in this server's `.env` → `docker compose pull && docker 
 | `docker-compose.yml` | PostgreSQL, bootstrap (migrations), API (also serves the website, dashboard and docs), worker, daily backup |
 | `.env.example` | Template for `.env` (committed) |
 | `.env` | Your settings and secrets, copied from `.env.example` (git-ignored, never committed) |
-| `nginx/calendar-api.conf` | nginx site for `/etc/nginx/sites-available` |
+| `nginx-site.conf.example` | nginx site for `/etc/nginx/sites-available` (set your domain in it) |
 | `init-db.sh` | Creates the least-privilege database users on first start |
 | `backup.sh` | Daily database dump into `./Dockerdata/backups` |
 
@@ -27,14 +28,15 @@ set `VERSION=vX.Y.Z` in this server's `.env` → `docker compose pull && docker 
 
 - Linux server with 2 vCPU, 2 GB RAM, 20 GB disk (Ubuntu 24.04 or similar).
 - Install Docker: `curl -fsSL https://get.docker.com | sh`
-- DNS: an **A record** for `calendar.oneclickinfosys.com` pointing to the server's IP.
+- DNS: an **A record** for your domain (ours is `calendar.oneclickinfosys.com`) pointing to the server's IP.
+  Hosting your own copy? Replace `calendar.oneclickinfosys.com` with your domain in every command below.
 - Open ports **80** and **443** in the firewall.
 
 ## 2. Get this repository onto the server and configure
 
 ```bash
 ssh user@your-server
-sudo git clone <bs-server repository URL> /opt/bs-calendar   # private repo: use a deploy key or token
+sudo git clone https://github.com/Sarojdhakal307/bs-calendar-server.git /opt/bs-calendar
 sudo chown -R $USER /opt/bs-calendar
 cd /opt/bs-calendar
 cp .env.example .env
@@ -90,7 +92,8 @@ On your own computer, open `http://localhost:8080` directly.
 ```bash
 sudo apt install -y nginx certbot python3-certbot-nginx
 
-sudo cp nginx/calendar-api.conf /etc/nginx/sites-available/calendar-api.conf
+sudo cp nginx-site.conf.example /etc/nginx/sites-available/calendar-api.conf
+sudo sed -i 's/calendar.example.com/calendar.oneclickinfosys.com/g' /etc/nginx/sites-available/calendar-api.conf
 sudo ln -s /etc/nginx/sites-available/calendar-api.conf /etc/nginx/sites-enabled/
 sudo nginx -t && sudo systemctl reload nginx
 
@@ -138,9 +141,10 @@ curl -H "X-Api-Key: pk_..." "$API/v1/convert?ad=2026-09-24"
 ```
 
 Then add holidays and events, and create other admins (a second `calendar_admin` is needed to approve
-year-table changes). All admin commands: [`docs/api.md`](https://github.com/Sarojdhakal307/BS/blob/main/docs/api.md) in the bs-calendar
-repository. Using the API from a website or a mobile app: [`docs/web.md`](https://github.com/Sarojdhakal307/BS/blob/main/docs/web.md)
-and [`docs/react-native.md`](https://github.com/Sarojdhakal307/BS/blob/main/docs/react-native.md).
+year-table changes). All admin commands: [`docs/api.md`](https://github.com/Sarojdhakal307/bs-calendar/blob/main/docs/api.md) in the bs-calendar
+repository. Using the API from a website or a mobile app: [`docs/web.md`](https://github.com/Sarojdhakal307/bs-calendar/blob/main/docs/web.md),
+[`docs/expo-date-picker.md`](https://github.com/Sarojdhakal307/bs-calendar/blob/main/docs/expo-date-picker.md)
+and [`docs/react-native.md`](https://github.com/Sarojdhakal307/bs-calendar/blob/main/docs/react-native.md).
 
 ## 6. Update to a new version
 
@@ -211,3 +215,7 @@ cd /opt/bs-calendar && git pull && docker compose up -d
 ```
 
 When you add a setting to `.env`, add it to `.env.example` too (with a placeholder), so the template stays complete.
+
+## License
+
+MIT, see [LICENSE](LICENSE).
